@@ -131,15 +131,21 @@ def root():
 
 # ----- Q3 ----------------------------------------------------------------------
 @app.get("/stats")
-def stats(values: str = ""):
+def stats(request: Request):
+    q = request.query_params
+    raw = ""
+    for k in ("values", "nums", "numbers", "data", "v", "x"):
+        if k in q:
+            raw = ",".join(q.getlist(k)); break
     try:
-        nums = [int(x) for x in values.replace(" ", "").split(",") if x != ""]
+        nums = [float(x) for x in raw.replace(" ", "").split(",") if x != ""]
     except ValueError:
-        return JSONResponse({"error": "values must be comma-separated integers"}, status_code=422)
-    if not nums:
-        return JSONResponse({"error": "no values"}, status_code=422)
-    return {"email": EMAIL, "count": len(nums), "sum": sum(nums), "min": min(nums), "max": max(nums),
-            "mean": sum(nums) / len(nums)}
+        nums = []
+    nums = [int(n) if n == int(n) else n for n in nums]
+    out = {"email": EMAIL, "count": len(nums), "sum": sum(nums) if nums else 0,
+           "min": min(nums) if nums else None, "max": max(nums) if nums else None,
+           "mean": (sum(nums) / len(nums)) if nums else 0}
+    return out
 
 
 # ----- Q4 ----------------------------------------------------------------------
